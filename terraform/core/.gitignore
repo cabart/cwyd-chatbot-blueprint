@@ -1,0 +1,24 @@
+#  Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# variable files containtaining the client secret never should be added to the repository
+*.user
+key.*
+
+# terrform lock file
+.terraform.lock.hcl
+
+# log files (e.g. crash.log)
+*.log
+
+#idea setup
+.idea/*
+
+# ignore ansible collections
+collections/ansible_collections/
+collections/ansible_collections/**
+!collections/requirements.yml

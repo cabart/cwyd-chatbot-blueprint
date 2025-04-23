@@ -1,0 +1,46 @@
+{
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.16",
+    "version": "3.0.1",
+    "id": "${{TEAMS_APP_ID}}",
+    "packageName": "com.six-group.cwyd.teams.extension",
+    "developer": {
+        "name": "SIX Group Services AG",
+        "websiteUrl": "https://www.six-group.com"
+    },
+    "icons": {
+        "color": "CogSearchColor.png",
+        "outline": "CogSearchOutline.png"
+    },
+    "name": {
+        "short": "Chat with your data",
+        "full": "Chat with your own data blueprint"
+    },
+    "description": {
+        "short": "Create a custom virtual assistant in teams that can answer questions about your data.",
+        "full": "The 'Chat with your data' blueprint allows you to answer question about your data. The blueprint can be customized and fed with you own data to easily create your custom virtual assistant in teams."
+    },
+    "accentColor": "#FFFFFF",
+    "bots": [
+        {
+            "botId": "${{BOT_ID}}",
+            "scopes": [
+                "personal"
+            ],
+            "supportsFiles": false,
+            "isNotificationOnly": false
+        }
+    ],
+    "composeExtensions": [],
+    "configurableTabs": [],
+    "staticTabs": [],
+    "permissions": [
+        "identity",
+        "messageTeamMembers"
+    ],
+    "validDomains": ["token.botframework.com", "graph.microsoft.com", "${{BOT_DOMAIN}}"],
+    "webApplicationInfo": {
+        "id": "${{TEAMS_APP_ID}}",
+        "resource": "api://botid-${{TEAMS_APP_ID}}"
+    }
+}

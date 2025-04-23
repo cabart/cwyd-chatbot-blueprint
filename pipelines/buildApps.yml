@@ -1,0 +1,122 @@
+# Define the following variables in the dev ops UI:
+# serviceConnection
+# resourceGroup
+# webAppName
+# teamsAppName
+# dockerRegistryServiceConnection
+# registryName
+
+trigger:
+- none
+
+pool:
+  vmImage: "ubuntu-latest"
+
+parameters:
+- name: imageNamePrefix
+  type: string
+  default: 'cwydbot'
+- name: imageTag
+  type: string
+  default: '$(Build.BuildId)'
+- name: selectStage
+  type: string
+  default: 'BuildAndDeploy'
+  values:
+  - 'BuildAndDeploy'
+  - 'Build'
+  - 'Deploy'
+- name: selectApplication
+  type: string
+  default: 'All'
+  values:
+  - 'All'
+  - 'WebApp'
+  - 'TeamsApp'
+
+variables:
+  buildContext: 'cwyd-apps'
+  buildConfiguration: 'Release'
+  system.debug: true
+  
+stages:
+- stage: Build
+  # run when BuildAndDeploy is selected or when Build is selected
+  condition: or(eq('${{ parameters.selectStage }}', 'BuildAndDeploy'), eq('${{ parameters.selectStage }}', 'Build'))
+  jobs:
+  - job: BuildImagesJob
+    condition: or(eq('${{ parameters.selectApplication }}', 'All'), eq('${{ parameters.selectApplication }}', 'WebApp'))
+    steps:
+    - task: DockerInstaller@0
+    - task: Docker@2
+      displayName: Login to ACR
+      inputs:
+        command: login
+        containerRegistry: $(dockerRegistryServiceConnection)
+    - task: Docker@2
+      displayName: Build and push webapp image
+      inputs:
+        command: buildAndPush
+        repository: '${{ parameters.imageNamePrefix }}/webapp'
+        dockerfile: 'cwyd-apps/WebApp.Dockerfile'
+        buildContext: $(buildContext)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          ${{ parameters.imageTag }}
+          latest
+
+  - job: BuildTeamsApp
+    condition: or(eq('${{ parameters.selectApplication }}', 'All'), eq('${{ parameters.selectApplication }}', 'TeamsApp'))
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.20.4'
+    - script: |
+        cd teams-app
+        npm install
+        npm run build --if-present
+      displayName: 'Install npm packages and build'
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(System.DefaultWorkingDirectory)/teams-app'
+        artifactName: 'drop'
+
+- stage: Deploy
+  # run when BuildAndDeploy is selected or when Deploy is selected
+  condition: or(eq('${{ parameters.selectStage }}', 'BuildAndDeploy'), eq('${{ parameters.selectStage }}', 'Deploy'))
+  jobs:
+  - job: DeployWebApp
+    condition: or(eq('${{ parameters.selectApplication }}', 'All'), eq('${{ parameters.selectApplication }}', 'WebApp'))
+    steps:
+    # deploy webapp image to app service
+    - task: DockerInstaller@0
+    - task: AzureRmWebAppDeployment@4
+      displayName: Deploy webapp image to app service
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: $(serviceConnection)
+        appType: 'webAppContainer'
+        WebAppName: '$(webAppName)'
+        DockerNamespace: '$(registryName)'
+        DockerRepository: '${{ parameters.imageNamePrefix }}/webapp'
+        DockerImageTag: '${{ parameters.imageTag }}'
+  - job: DeployTeamsApp
+    condition: or(eq('${{ parameters.selectApplication }}', 'All'), eq('${{ parameters.selectApplication }}', 'TeamsApp'))
+    steps:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: 'drop'
+    - task: ArchiveFiles@2
+      displayName: 'Archive files'
+      inputs:
+        rootFolderOrFile: '$(Pipeline.Workspace)/'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: '$(Pipeline.Workspace)/dist/$(Build.BuildId).zip'
+        replaceExistingArchive: true
+    - task: AzureRMWebAppDeployment@4
+      inputs:
+        appType: webApp
+        azureSubscription: $(serviceConnection)
+        WebAppName: '$(teamsAppName)'
+        package: '$(Pipeline.Workspace)/dist/$(Build.BuildId).zip' 

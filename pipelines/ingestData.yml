@@ -1,0 +1,31 @@
+# Define the following variables in the dev ops UI:
+# cwydKeyVault
+# serviceConnection
+
+trigger:
+- none
+
+pool: shared-deployment-vmss
+
+jobs:
+  - job: IngestData
+    container:
+      image: "acrdevopssharedchnprod.azurecr.io/devops-runner:latest"
+      endpoint: "private-acr-devopsshared"  
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: '$(serviceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          export CWYD_KEY_VAULT="$(cwydKeyVault)"
+          echo "Using Key Vault $CWYD_KEY_VAULT as Parameter Store for Ingestion Scripts"
+
+          python3 -m venv .venv
+          source .venv/bin/activate
+
+          pip install -r ../requirements-dev.txt
+          python3 data_preparation.py --njobs 8
+        addSpnToEnvironment: true
+        workingDirectory: '$(System.DefaultWorkingDirectory)/cwyd-apps/scripts'

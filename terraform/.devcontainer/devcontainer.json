@@ -1,0 +1,28 @@
+{
+	"name": "Cloud Foundation Dev Container",
+	"image": "mcr.microsoft.com/devcontainers/base:bullseye",
+	"features": {
+		"ghcr.io/devcontainers/features/powershell:latest": {},
+		"ghcr.io/devcontainers/features/azure-cli:latest": {},
+		"ghcr.io/mickeahlinder/devcontainer-features/tfenv:latest": {}
+	},
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"editor.formatOnSave": true,
+				"files.insertFinalNewline": true,
+				"window.autoDetectHighContrast": true,
+				"editor.action.commentLine": {
+					"key": "ctrl+[IntlBackslash]",
+					"command": "editor.action.commentLine",
+					"when": "editorTextFocus && !editorReadonly"
+				}
+			},
+			"extensions": [
+				"hashicorp.terraform",
+				"hashicorp.hcl"
+			]
+		}
+	},
+	"postStartCommand": "tfenv install 1.9.0 && tfenv use 1.9.0"
+}

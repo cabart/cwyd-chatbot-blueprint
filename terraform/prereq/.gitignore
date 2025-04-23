@@ -1,0 +1,21 @@
+#  Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# variable files containtaining the client secret never should be added to the repository
+*.user
+
+# log files (e.g. crash.log)
+*.log
+
+#idea setup
+.idea/*
+
+# dev container
+.devcontainer/*
+
+# local testing
+testing/*
